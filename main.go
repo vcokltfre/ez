@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/vcokltfre/ez/ez"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Printf("Usage: %s <filename> [opts]", os.Args[1])
+		fmt.Printf("Usage: %s <filename> [opts]", os.Args[0])
 		return
 	}
 
@@ -17,5 +19,9 @@ func main() {
 		return
 	}
 
-	fmt.Println(string(data)) // TODO: Run code
+	err = ez.Run(string(data), os.Args[1])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

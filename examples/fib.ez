@@ -1,0 +1,15 @@
+a = 0
+b = 1
+
+n = 10
+
+:loop
+
+temp = a
+a = b
+b = temp + b
+
+if n > 0
+    n = n - 1
+    goto loop
+end

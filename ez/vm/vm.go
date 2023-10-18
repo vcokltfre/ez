@@ -444,5 +444,62 @@ func New(memsize int) *VM {
 		return nil
 	})
 
+	// call write_file <filename> <addr> <length>
+	vm.RegisterFunc("write_file", 3, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args[1:]...); err != nil {
+			return err
+		}
+
+		file, addr, length := args[0], args[1], args[2]
+
+		if file.Type != parser.ValueTypeStr {
+			return file.Token.Context.Error("runtime", "expected string literal")
+		}
+
+		var address int64
+		if addr.Type == parser.ValueTypeInt {
+			address, _ = strconv.ParseInt(addr.Value, 10, 64)
+		} else {
+			var ok bool
+			address, ok = vm.Variables[addr.Value]
+			if !ok {
+				return addr.Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+
+		if address < 0 || address >= int64(len(vm.Memory)) {
+			return ctx.Error("runtime", "invalid memory address")
+		}
+
+		var flen int64
+		if length.Type == parser.ValueTypeInt {
+			flen, _ = strconv.ParseInt(length.Value, 10, 64)
+		} else {
+			var ok bool
+			flen, ok = vm.Variables[length.Value]
+			if !ok {
+				return length.Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+
+		if address+flen >= int64(len(vm.Memory)) {
+			return ctx.Error("runtime", fmt.Sprintf("memory out of bounds (%d)", address+flen))
+		}
+
+		data := make([]byte, flen)
+		for i := int64(0); i < flen; i++ {
+			data[i] = byte(vm.Memory[address+i])
+		}
+
+		err := os.WriteFile(file.Value, data, 0644)
+		if err != nil {
+			return file.Token.Context.Error("runtime", err.Error())
+		}
+
+		return nil
+	})
+
+	vm.Variables["__memsize"] = int64(memsize)
+
 	return vm
 }

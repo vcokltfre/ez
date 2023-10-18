@@ -10,3 +10,5 @@ call showc c
 char = char + 1
 
 if char < f_len goto loop
+
+call write_file "/tmp/ez-examples/file.ez" 0 f_len

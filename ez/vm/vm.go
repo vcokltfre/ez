@@ -395,5 +395,54 @@ func New(memsize int) *VM {
 		return exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
 	})
 
+	// call read_file <filename> <addr> <length_var>
+	vm.RegisterFunc("read_file", 3, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args[1:]...); err != nil {
+			return err
+		}
+
+		file, addr, length := args[0], args[1], args[2]
+
+		if file.Type != parser.ValueTypeStr {
+			return file.Token.Context.Error("runtime", "expected string literal")
+		}
+
+		if length.Type != parser.ValueTypeVar {
+			return length.Token.Context.Error("runtime", "expected identifier")
+		}
+
+		var address int64
+		if addr.Type == parser.ValueTypeInt {
+			address, _ = strconv.ParseInt(addr.Value, 10, 64)
+		} else {
+			var ok bool
+			address, ok = vm.Variables[addr.Value]
+			if !ok {
+				return addr.Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+
+		if address < 0 || address >= int64(len(vm.Memory)) {
+			return ctx.Error("runtime", "invalid memory address")
+		}
+
+		data, err := os.ReadFile(file.Value)
+		if err != nil {
+			return file.Token.Context.Error("runtime", err.Error())
+		}
+
+		if address+int64(len(data)) >= int64(len(vm.Memory)) {
+			return ctx.Error("runtime", "file too large")
+		}
+
+		for i, b := range data {
+			vm.Memory[address+int64(i)] = int64(b)
+		}
+
+		vm.Variables[length.Value] = int64(len(data))
+
+		return nil
+	})
+
 	return vm
 }

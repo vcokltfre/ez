@@ -120,7 +120,11 @@ func (vm *VM) ifStmt(stmt parser.If) error {
 	}
 
 	if result {
-		vm.index = vm.jumps[stmt.Goto]
+		if _, ok := vm.jumps[stmt.Goto.Name]; !ok {
+			return stmt.Goto.Token.Context.Error("runtime", "label does not exist")
+		}
+
+		vm.index = vm.jumps[stmt.Goto.Name]
 	}
 
 	return nil
@@ -172,6 +176,16 @@ func (vm *VM) input(stmt parser.Input) error {
 	return nil
 }
 
+func (vm *VM) goTo(stmt parser.Goto) error {
+	if _, ok := vm.jumps[stmt.Name]; !ok {
+		return stmt.Token.Context.Error("runtime", "label does not exist")
+	}
+
+	vm.index = vm.jumps[stmt.Name]
+
+	return nil
+}
+
 func (vm *VM) Run(program *parser.Program) error {
 	vm.program = program
 
@@ -213,6 +227,11 @@ func (vm *VM) Run(program *parser.Program) error {
 			}
 		case parser.StmtTypeInput:
 			err := vm.input(stmt.(parser.Input))
+			if err != nil {
+				return err
+			}
+		case parser.StmtTypeGoto:
+			err := vm.goTo(stmt.(parser.Goto))
 			if err != nil {
 				return err
 			}

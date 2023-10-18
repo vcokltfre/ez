@@ -139,7 +139,10 @@ func parseIf(tokens []lexer.Token) If {
 				Token: condRhs,
 			},
 		},
-		Goto: gotoLabel.Data,
+		Goto: Goto{
+			Name:  gotoLabel.Data,
+			Token: gotoLabel,
+		},
 	}
 }
 
@@ -187,7 +190,8 @@ func parseGoto(tokens []lexer.Token) Goto {
 	label := tokens[1]
 
 	return Goto{
-		Name: label.Data,
+		Name:  label.Data,
+		Token: label,
 	}
 }
 

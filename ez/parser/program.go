@@ -65,7 +65,7 @@ func (v VarDeclExpr) Type() StmtType {
 
 type If struct {
 	Cond OpExpr
-	Goto string
+	Goto Goto
 }
 
 func (i If) Type() StmtType {
@@ -105,7 +105,8 @@ func (i Input) Type() StmtType {
 }
 
 type Goto struct {
-	Name string
+	Name  string
+	Token lexer.Token
 }
 
 func (g Goto) Type() StmtType {

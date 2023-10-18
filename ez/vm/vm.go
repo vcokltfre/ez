@@ -10,8 +10,9 @@ import (
 )
 
 type ExternalFunc struct {
-	ArgCount int
-	Fn       func(lexer.TokenContext, ...parser.Value) error
+	ArgCount    int
+	ArgValidate bool
+	Fn          func(lexer.TokenContext, ...parser.Value) error
 }
 
 type VM struct {
@@ -203,10 +204,12 @@ func (vm *VM) call(stmt parser.Call) error {
 		return stmt.Token.Context.Error("runtime", "incorrect number of arguments")
 	}
 
-	for _, val := range stmt.Values {
-		if val.Type == parser.ValueTypeVar {
-			if _, ok := vm.Variables[val.Value]; !ok {
-				return val.Token.Context.Error("runtime", "variable does not exist")
+	if callFn.ArgValidate {
+		for _, val := range stmt.Values {
+			if val.Type == parser.ValueTypeVar {
+				if _, ok := vm.Variables[val.Value]; !ok {
+					return val.Token.Context.Error("runtime", "variable does not exist")
+				}
 			}
 		}
 	}
@@ -214,10 +217,11 @@ func (vm *VM) call(stmt parser.Call) error {
 	return callFn.Fn(stmt.Token.Context, stmt.Values...)
 }
 
-func (vm *VM) RegisterFunc(name string, argCount int, fn func(lexer.TokenContext, ...parser.Value) error) {
+func (vm *VM) RegisterFunc(name string, argCount int, argValidate bool, fn func(lexer.TokenContext, ...parser.Value) error) {
 	vm.Funcs[name] = ExternalFunc{
-		ArgCount: argCount,
-		Fn:       fn,
+		ArgCount:    argCount,
+		ArgValidate: argValidate,
+		Fn:          fn,
 	}
 }
 
@@ -284,11 +288,79 @@ func (vm *VM) Run(program *parser.Program) error {
 }
 
 func New(memsize int) *VM {
-	return &VM{
+	vm := &VM{
 		Memory:    make([]int64, memsize),
 		Variables: make(map[string]int64),
 		Funcs:     make(map[string]ExternalFunc),
 
 		jumps: make(map[string]int),
 	}
+
+	// call memset <addr> <value>
+	vm.RegisterFunc("memset", 2, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		var addr int64
+		if args[0].Type == parser.ValueTypeInt {
+			addr, _ = strconv.ParseInt(args[0].Value, 10, 64)
+		} else {
+			addr = vm.Variables[args[0].Value]
+		}
+
+		if addr < 0 || addr >= int64(len(vm.Memory)) {
+			return ctx.Error("runtime", "invalid memory address")
+		}
+
+		var val int64
+		if args[1].Type == parser.ValueTypeInt {
+			val, _ = strconv.ParseInt(args[1].Value, 10, 64)
+		} else {
+			val = vm.Variables[args[1].Value]
+		}
+
+		vm.Memory[addr] = val
+
+		return nil
+	})
+
+	// call memget <addr> <var>
+	vm.RegisterFunc("memget", 2, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		var addr int64
+		if args[0].Type == parser.ValueTypeInt {
+			addr, _ = strconv.ParseInt(args[0].Value, 10, 64)
+		} else {
+			var ok bool
+			addr, ok = vm.Variables[args[0].Value]
+			if !ok {
+				return args[0].Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+
+		if addr < 0 || addr >= int64(len(vm.Memory)) {
+			return ctx.Error("runtime", "invalid memory address")
+		}
+
+		if args[1].Type != parser.ValueTypeVar {
+			return args[1].Token.Context.Error("runtime", "expected identifier not literal")
+		}
+
+		vm.Variables[args[1].Value] = vm.Memory[addr]
+
+		return nil
+	})
+
+	// call debug ...vars
+	vm.RegisterFunc("debug", -1, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		for _, arg := range args {
+			var val int64
+			if arg.Type == parser.ValueTypeInt {
+				val, _ = strconv.ParseInt(arg.Value, 10, 64)
+			} else {
+				val = vm.Variables[arg.Value]
+			}
+			fmt.Printf("Debug: %s (%s): %d\n", arg.Value, arg.Type, val)
+		}
+
+		return nil
+	})
+
+	return vm
 }

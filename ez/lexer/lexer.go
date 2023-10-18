@@ -31,7 +31,7 @@ func skipWhitespace(code string) int {
 
 func getIntLiteral(code string, ctx TokenContext) (*Token, error) {
 	if match := matchHexInt(code); match != nil {
-		val, _ := strconv.ParseInt(*match, 16, 64)
+		val, _ := strconv.ParseInt((*match)[2:], 16, 64)
 		decimal := fmt.Sprintf("%d", val)
 
 		return &Token{

@@ -13,6 +13,7 @@ var (
 	matchHexInt     = match(`^0x[0-9a-fA-F]+\b`)
 	matchIdentifier = match(`^[a-zA-Z_][a-zA-Z0-9_]*\b`)
 	matchLabel      = match(`^:[a-zA-Z_][a-zA-Z0-9_]*\b`)
+	matchString     = match(`^"[^"]*"`)
 )
 
 func skipWhitespace(code string) int {
@@ -104,6 +105,19 @@ func getLabel(code string, ctx TokenContext) (*Token, error) {
 	return nil, ctx.Error(STEP, "Invalid label")
 }
 
+func getString(code string, ctx TokenContext) (*Token, error) {
+	if match := matchString(code); match != nil {
+		return &Token{
+			Type:    TTLiteralStr,
+			Length:  len(*match),
+			Data:    (*match)[1 : len(*match)-1],
+			Context: ctx,
+		}, nil
+	}
+
+	return nil, ctx.Error(STEP, "Invalid string literal")
+}
+
 func Lex(code, filename string) ([]Token, error) {
 	index := 0
 	line := 1
@@ -177,6 +191,18 @@ func Lex(code, filename string) ([]Token, error) {
 
 		if current == ':' {
 			token, err := getLabel(code[index:], context)
+			if err != nil {
+				return nil, err
+			}
+
+			tokens = append(tokens, *token)
+			index += token.Length
+			column += token.Length
+			continue
+		}
+
+		if current == '"' {
+			token, err := getString(code[index:], context)
 			if err != nil {
 				return nil, err
 			}

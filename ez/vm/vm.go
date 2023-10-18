@@ -227,6 +227,16 @@ func (vm *VM) Run(program *parser.Program) error {
 	return nil
 }
 
+func denyStringType(vals ...parser.Value) error {
+	for _, val := range vals {
+		if val.Type == parser.ValueTypeStr {
+			return val.Token.Context.Error("runtime", "expected identifier or literal int not literal str")
+		}
+	}
+
+	return nil
+}
+
 func New(memsize int) *VM {
 	vm := &VM{
 		Memory:    make([]int64, memsize),
@@ -238,6 +248,10 @@ func New(memsize int) *VM {
 
 	// call showc <var>
 	vm.RegisterFunc("showc", 1, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args...); err != nil {
+			return err
+		}
+
 		var val int64
 		if args[0].Type == parser.ValueTypeInt {
 			val, _ = strconv.ParseInt(args[0].Value, 10, 64)
@@ -256,6 +270,10 @@ func New(memsize int) *VM {
 
 	// call shown <var>
 	vm.RegisterFunc("shown", 1, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args...); err != nil {
+			return err
+		}
+
 		var val int64
 		if args[0].Type == parser.ValueTypeInt {
 			val, _ = strconv.ParseInt(args[0].Value, 10, 64)
@@ -274,6 +292,10 @@ func New(memsize int) *VM {
 
 	// call input <var>
 	vm.RegisterFunc("input", 1, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args...); err != nil {
+			return err
+		}
+
 		if args[0].Type != parser.ValueTypeVar {
 			return args[0].Token.Context.Error("runtime", "expected identifier not literal")
 		}
@@ -291,6 +313,10 @@ func New(memsize int) *VM {
 
 	// call memset <addr> <value>
 	vm.RegisterFunc("memset", 2, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args...); err != nil {
+			return err
+		}
+
 		var addr int64
 		if args[0].Type == parser.ValueTypeInt {
 			addr, _ = strconv.ParseInt(args[0].Value, 10, 64)
@@ -316,6 +342,10 @@ func New(memsize int) *VM {
 
 	// call memget <addr> <var>
 	vm.RegisterFunc("memget", 2, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if err := denyStringType(args...); err != nil {
+			return err
+		}
+
 		var addr int64
 		if args[0].Type == parser.ValueTypeInt {
 			addr, _ = strconv.ParseInt(args[0].Value, 10, 64)
@@ -343,6 +373,11 @@ func New(memsize int) *VM {
 	// call debug ...vars
 	vm.RegisterFunc("debug", -1, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
 		for _, arg := range args {
+			if arg.Type == parser.ValueTypeStr {
+				fmt.Printf("Debug: %s (str): %s\n", arg.Value, arg.Value)
+				continue
+			}
+
 			var val int64
 			if arg.Type == parser.ValueTypeInt {
 				val, _ = strconv.ParseInt(arg.Value, 10, 64)

@@ -20,6 +20,7 @@ const (
 
 	TTIdentifier TokenType = "identifier"
 	TTLiteralInt TokenType = "literal_int"
+	TTLiteralStr TokenType = "literal_str"
 
 	TTOpAssign TokenType = "op_assign"
 

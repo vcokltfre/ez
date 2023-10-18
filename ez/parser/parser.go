@@ -76,7 +76,9 @@ func matchCall(tokens []lexer.Token) bool {
 	}
 
 	index := 2
-	for index < len(tokens) && (tokens[index].Type == lexer.TTLiteralInt || tokens[index].Type == lexer.TTIdentifier) {
+	for index < len(tokens) && (tokens[index].Type == lexer.TTLiteralInt ||
+		tokens[index].Type == lexer.TTIdentifier ||
+		tokens[index].Type == lexer.TTLiteralStr) {
 		index++
 	}
 

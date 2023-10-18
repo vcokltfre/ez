@@ -18,6 +18,7 @@ type ValueType string
 const (
 	ValueTypeInt ValueType = "int"
 	ValueTypeVar ValueType = "var"
+	ValueTypeStr ValueType = "str"
 )
 
 func valueTypeFromToken(t lexer.TokenType) ValueType {
@@ -26,6 +27,8 @@ func valueTypeFromToken(t lexer.TokenType) ValueType {
 		return ValueTypeInt
 	case lexer.TTIdentifier:
 		return ValueTypeVar
+	case lexer.TTLiteralStr:
+		return ValueTypeStr
 	default:
 		return ""
 	}

@@ -3,7 +3,6 @@ package lexer
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 const STEP = "lexing"
@@ -12,7 +11,6 @@ var (
 	matchDecimalInt = match(`\d+\b`)
 	matchHexInt     = match(`0x[0-9a-fA-F]+\b`)
 	matchIdentifier = match(`[a-zA-Z_][a-zA-Z0-9_]*\b`)
-	matchString     = match(`"[^"\\]*(?:\\.[^"\\]*)*"`)
 	matchLongOp     = match(`==|!=|<=|>=`)
 	matchOp         = match(`[=+\-*/%^<>]`)
 	matchLabel      = match(`:[a-zA-Z_][a-zA-Z0-9_]*\b`)
@@ -57,24 +55,6 @@ func getIntLiteral(code string, ctx TokenContext) (*Token, error) {
 	return nil, ctx.Error(STEP, "Invalid integer literal", "Integer literals must be in decimal or hexadecimal format")
 }
 
-func getStringLiteral(code string, ctx TokenContext) (*Token, error) {
-	if match := matchString(code); match != nil {
-		data := *match
-		data = data[1 : len(data)-1]
-
-		data = strings.ReplaceAll(data, "\\\"", "\"")
-
-		return &Token{
-			Type:    TTLiteralStr,
-			Length:  len(*match),
-			Data:    data,
-			Context: ctx,
-		}, nil
-	}
-
-	return nil, ctx.Error(STEP, "Invalid string literal")
-}
-
 func getIdentifier(code string, ctx TokenContext) (*Token, error) {
 	if match := matchIdentifier(code); match != nil {
 		if IsKeyword(*match) {
@@ -102,6 +82,7 @@ func getOperator(code string, ctx TokenContext) (*Token, error) {
 		return &Token{
 			Type:    Operators[*match],
 			Length:  len(*match),
+			Data:    *match,
 			Context: ctx,
 		}, nil
 	}
@@ -110,6 +91,7 @@ func getOperator(code string, ctx TokenContext) (*Token, error) {
 		return &Token{
 			Type:    Operators[*match],
 			Length:  len(*match),
+			Data:    *match,
 			Context: ctx,
 		}, nil
 	}
@@ -122,7 +104,7 @@ func getLabel(code string, ctx TokenContext) (*Token, error) {
 		return &Token{
 			Type:    TTLabel,
 			Length:  len(*match),
-			Data:    *match,
+			Data:    (*match)[1:],
 			Context: ctx,
 		}, nil
 	}
@@ -179,18 +161,6 @@ func Lex(code, filename string) ([]Token, error) {
 
 		if 'a' <= current && current <= 'z' || 'A' <= current && current <= 'Z' || current == '_' {
 			token, err := getIdentifier(code[index:], context)
-			if err != nil {
-				return nil, err
-			}
-
-			tokens = append(tokens, *token)
-			index += token.Length
-			column += token.Length
-			continue
-		}
-
-		if current == '"' {
-			token, err := getStringLiteral(code[index:], context)
 			if err != nil {
 				return nil, err
 			}

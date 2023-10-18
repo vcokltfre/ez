@@ -1,10 +1,9 @@
 package ez
 
 import (
-	"fmt"
-
 	"github.com/vcokltfre/ez/ez/lexer"
 	"github.com/vcokltfre/ez/ez/parser"
+	"github.com/vcokltfre/ez/ez/vm"
 )
 
 func Run(code, filename string) error {
@@ -18,7 +17,7 @@ func Run(code, filename string) error {
 		return err
 	}
 
-	fmt.Println(*program)
+	executor := vm.New(65536)
 
-	return nil
+	return executor.Run(program)
 }

@@ -19,7 +19,6 @@ type ValueType string
 
 const (
 	ValueTypeInt ValueType = "int"
-	ValueTypeStr ValueType = "str"
 	ValueTypeVar ValueType = "var"
 )
 
@@ -27,8 +26,6 @@ func valueTypeFromToken(t lexer.TokenType) ValueType {
 	switch t {
 	case lexer.TTLiteralInt:
 		return ValueTypeInt
-	case lexer.TTLiteralStr:
-		return ValueTypeStr
 	case lexer.TTIdentifier:
 		return ValueTypeVar
 	default:
@@ -39,6 +36,7 @@ func valueTypeFromToken(t lexer.TokenType) ValueType {
 type Value struct {
 	Type  ValueType
 	Value string
+	Token lexer.Token
 }
 
 type VarDeclValue struct {

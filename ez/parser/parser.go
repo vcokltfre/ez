@@ -35,22 +35,22 @@ var (
 	matchVarDeclValue = matchTokenPattern(
 		[]lexer.TokenType{lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTOpAssign},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTLiteralStr, lexer.TTIdentifier},
+		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTEndStmt},
 	)
 	matchVarDeclExpr = matchTokenPattern(
 		[]lexer.TokenType{lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTOpAssign},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTLiteralStr, lexer.TTIdentifier},
+		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTOpAdd, lexer.TTOpSub, lexer.TTOpMul, lexer.TTOpDiv, lexer.TTOpMod, lexer.TTOpPow},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTLiteralStr, lexer.TTIdentifier},
+		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTEndStmt},
 	)
 	matchIf = matchTokenPattern(
 		[]lexer.TokenType{lexer.TTKeywordIf},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTLiteralStr, lexer.TTIdentifier},
+		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTOpLt, lexer.TTOpGt, lexer.TTOpLte, lexer.TTOpGte, lexer.TTOpEq, lexer.TTOpNeq},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTLiteralStr, lexer.TTIdentifier},
+		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTKeywordGoto},
 		[]lexer.TokenType{lexer.TTIdentifier},
 		[]lexer.TokenType{lexer.TTEndStmt},
@@ -90,6 +90,7 @@ func parseVarDeclValue(tokens []lexer.Token) VarDeclValue {
 		Value: Value{
 			Type:  valueTypeFromToken(assignFrom.Type),
 			Value: assignFrom.Data,
+			Token: assignFrom,
 		},
 	}
 }
@@ -107,10 +108,12 @@ func parseVarDeclExpr(tokens []lexer.Token) VarDeclExpr {
 			Lhs: Value{
 				Type:  valueTypeFromToken(lhsValue.Type),
 				Value: lhsValue.Data,
+				Token: lhsValue,
 			},
 			Rhs: Value{
 				Type:  valueTypeFromToken(rhsValue.Type),
 				Value: rhsValue.Data,
+				Token: rhsValue,
 			},
 		},
 	}
@@ -128,10 +131,12 @@ func parseIf(tokens []lexer.Token) If {
 			Lhs: Value{
 				Type:  valueTypeFromToken(condLhs.Type),
 				Value: condLhs.Data,
+				Token: condLhs,
 			},
 			Rhs: Value{
 				Type:  valueTypeFromToken(condRhs.Type),
 				Value: condRhs.Data,
+				Token: condRhs,
 			},
 		},
 		Goto: gotoLabel.Data,
@@ -153,6 +158,7 @@ func parseShownum(tokens []lexer.Token) ShowNum {
 		Value: Value{
 			Type:  valueTypeFromToken(value.Type),
 			Value: value.Data,
+			Token: value,
 		},
 	}
 }
@@ -164,6 +170,7 @@ func parseShowchar(tokens []lexer.Token) ShowChar {
 		Value: Value{
 			Type:  valueTypeFromToken(value.Type),
 			Value: value.Data,
+			Token: value,
 		},
 	}
 }
@@ -190,35 +197,35 @@ func Parse(tokens []lexer.Token) (*Program, error) {
 
 	for index < len(tokens) {
 		if matchVarDeclValue(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseVarDeclValue(tokens))
+			program.Stmts = append(program.Stmts, parseVarDeclValue(tokens[index:]))
 			index += 4
 			continue
 		} else if matchVarDeclExpr(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseVarDeclExpr(tokens))
+			program.Stmts = append(program.Stmts, parseVarDeclExpr(tokens[index:]))
 			index += 6
 			continue
 		} else if matchIf(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseIf(tokens))
+			program.Stmts = append(program.Stmts, parseIf(tokens[index:]))
 			index += 7
 			continue
 		} else if matchLabel(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseLabel(tokens))
+			program.Stmts = append(program.Stmts, parseLabel(tokens[index:]))
 			index += 2
 			continue
 		} else if matchShownum(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseShownum(tokens))
+			program.Stmts = append(program.Stmts, parseShownum(tokens[index:]))
 			index += 3
 			continue
 		} else if matchShowchar(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseShowchar(tokens))
+			program.Stmts = append(program.Stmts, parseShowchar(tokens[index:]))
 			index += 3
 			continue
 		} else if matchInput(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseInput(tokens))
+			program.Stmts = append(program.Stmts, parseInput(tokens[index:]))
 			index += 3
 			continue
 		} else if matchGoto(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseGoto(tokens))
+			program.Stmts = append(program.Stmts, parseGoto(tokens[index:]))
 			index += 3
 			continue
 		} else if tokens[index].Type == lexer.TTEndStmt {

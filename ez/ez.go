@@ -6,7 +6,7 @@ import (
 	"github.com/vcokltfre/ez/ez/vm"
 )
 
-func Run(code, filename string) error {
+func Run(code, filename string, memory int) error {
 	tokens, err := lexer.Lex(code, filename)
 	if err != nil {
 		return err
@@ -17,7 +17,7 @@ func Run(code, filename string) error {
 		return err
 	}
 
-	executor := vm.New(65536)
+	executor := vm.New(memory)
 
 	return executor.Run(program)
 }

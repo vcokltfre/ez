@@ -70,9 +70,20 @@ var Operators = map[string]TokenType{
 	"^":  TTOpPow,
 }
 
-func IsOperator(op string) bool {
-	_, ok := Operators[op]
-	return ok
+var orderedOperators = []string{"<=", ">=", "==", "!=", "<", ">", "=", "+", "-", "*", "/", "%", "^"}
+
+var operatorCharacters = []string{
+	"=", "<", ">", "!", "+", "-", "*", "/", "%", "^",
+}
+
+func isOperatorCharacter(char string) bool {
+	for _, c := range operatorCharacters {
+		if c == char {
+			return true
+		}
+	}
+
+	return false
 }
 
 type TokenContext struct {

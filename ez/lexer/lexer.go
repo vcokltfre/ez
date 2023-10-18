@@ -3,17 +3,16 @@ package lexer
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 const STEP = "lexing"
 
 var (
-	matchDecimalInt = match(`\d+\b`)
-	matchHexInt     = match(`0x[0-9a-fA-F]+\b`)
-	matchIdentifier = match(`[a-zA-Z_][a-zA-Z0-9_]*\b`)
-	matchLongOp     = match(`==|!=|<=|>=`)
-	matchOp         = match(`[=+\-*/%^<>]`)
-	matchLabel      = match(`:[a-zA-Z_][a-zA-Z0-9_]*\b`)
+	matchDecimalInt = match(`^\d+\b`)
+	matchHexInt     = match(`^0x[0-9a-fA-F]+\b`)
+	matchIdentifier = match(`^[a-zA-Z_][a-zA-Z0-9_]*\b`)
+	matchLabel      = match(`^:[a-zA-Z_][a-zA-Z0-9_]*\b`)
 )
 
 func skipWhitespace(code string) int {
@@ -78,22 +77,15 @@ func getIdentifier(code string, ctx TokenContext) (*Token, error) {
 }
 
 func getOperator(code string, ctx TokenContext) (*Token, error) {
-	if match := matchLongOp(code); match != nil {
-		return &Token{
-			Type:    Operators[*match],
-			Length:  len(*match),
-			Data:    *match,
-			Context: ctx,
-		}, nil
-	}
-
-	if match := matchOp(code); match != nil {
-		return &Token{
-			Type:    Operators[*match],
-			Length:  len(*match),
-			Data:    *match,
-			Context: ctx,
-		}, nil
+	for _, op := range orderedOperators {
+		if strings.HasPrefix(code, op) {
+			return &Token{
+				Type:    Operators[op],
+				Length:  len(op),
+				Data:    op,
+				Context: ctx,
+			}, nil
+		}
 	}
 
 	return nil, ctx.Error(STEP, "Invalid operator")
@@ -171,7 +163,7 @@ func Lex(code, filename string) ([]Token, error) {
 			continue
 		}
 
-		if IsOperator(string(current)) {
+		if isOperatorCharacter(string(current)) {
 			token, err := getOperator(code[index:], context)
 			if err != nil {
 				return nil, err

@@ -3,6 +3,7 @@ package vm
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/vcokltfre/ez/ez/lexer"
@@ -138,52 +139,6 @@ func (vm *VM) ifStmt(stmt parser.If) error {
 	return nil
 }
 
-func (vm *VM) showNum(stmt parser.ShowNum) error {
-	var val int64
-	if stmt.Value.Type == parser.ValueTypeInt {
-		val, _ = strconv.ParseInt(stmt.Value.Value, 10, 64)
-	} else {
-		var ok bool
-		val, ok = vm.Variables[stmt.Value.Value]
-		if !ok {
-			return stmt.Value.Token.Context.Error("runtime", "variable does not exist")
-		}
-	}
-
-	fmt.Println(val)
-
-	return nil
-}
-
-func (vm *VM) showChar(stmt parser.ShowChar) error {
-	var val int64
-	if stmt.Value.Type == parser.ValueTypeInt {
-		val, _ = strconv.ParseInt(stmt.Value.Value, 10, 64)
-	} else {
-		var ok bool
-		val, ok = vm.Variables[stmt.Value.Value]
-		if !ok {
-			return stmt.Value.Token.Context.Error("runtime", "variable does not exist")
-		}
-	}
-
-	fmt.Printf("%c", val)
-
-	return nil
-}
-
-func (vm *VM) input(stmt parser.Input) error {
-	char := make([]byte, 1)
-	_, err := os.Stdin.Read(char)
-	if err != nil {
-		panic(err)
-	}
-
-	vm.Variables[stmt.Name] = int64(char[0])
-
-	return nil
-}
-
 func (vm *VM) goTo(stmt parser.Goto) error {
 	if _, ok := vm.jumps[stmt.Name]; !ok {
 		return stmt.Token.Context.Error("runtime", "label does not exist")
@@ -254,21 +209,6 @@ func (vm *VM) Run(program *parser.Program) error {
 				return err
 			}
 		case parser.StmtTypeLabel:
-		case parser.StmtTypeShownum:
-			err := vm.showNum(stmt.(parser.ShowNum))
-			if err != nil {
-				return err
-			}
-		case parser.StmtTypeShowchar:
-			err := vm.showChar(stmt.(parser.ShowChar))
-			if err != nil {
-				return err
-			}
-		case parser.StmtTypeInput:
-			err := vm.input(stmt.(parser.Input))
-			if err != nil {
-				return err
-			}
 		case parser.StmtTypeGoto:
 			err := vm.goTo(stmt.(parser.Goto))
 			if err != nil {
@@ -295,6 +235,59 @@ func New(memsize int) *VM {
 
 		jumps: make(map[string]int),
 	}
+
+	// call showc <var>
+	vm.RegisterFunc("showc", 1, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		var val int64
+		if args[0].Type == parser.ValueTypeInt {
+			val, _ = strconv.ParseInt(args[0].Value, 10, 64)
+		} else {
+			var ok bool
+			val, ok = vm.Variables[args[0].Value]
+			if !ok {
+				return args[0].Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+
+		fmt.Printf("%c", byte(val))
+
+		return nil
+	})
+
+	// call shown <var>
+	vm.RegisterFunc("shown", 1, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		var val int64
+		if args[0].Type == parser.ValueTypeInt {
+			val, _ = strconv.ParseInt(args[0].Value, 10, 64)
+		} else {
+			var ok bool
+			val, ok = vm.Variables[args[0].Value]
+			if !ok {
+				return args[0].Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+
+		fmt.Printf("%d", val)
+
+		return nil
+	})
+
+	// call input <var>
+	vm.RegisterFunc("input", 1, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		if args[0].Type != parser.ValueTypeVar {
+			return args[0].Token.Context.Error("runtime", "expected identifier not literal")
+		}
+
+		char := make([]byte, 1)
+		_, err := os.Stdin.Read(char)
+		if err != nil {
+			panic(err)
+		}
+
+		vm.Variables[args[0].Value] = int64(char[0])
+
+		return nil
+	})
 
 	// call memset <addr> <value>
 	vm.RegisterFunc("memset", 2, true, func(ctx lexer.TokenContext, args ...parser.Value) error {
@@ -360,6 +353,11 @@ func New(memsize int) *VM {
 		}
 
 		return nil
+	})
+
+	// call vm_no_input_buffering
+	vm.RegisterFunc("vm_no_input_buffering", 0, false, func(ctx lexer.TokenContext, args ...parser.Value) error {
+		return exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
 	})
 
 	return vm

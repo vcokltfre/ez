@@ -9,9 +9,6 @@ const (
 	StmtTypeVarDeclExpr  StmtType = "var_decl_expr"
 	StmtTypeIf           StmtType = "if"
 	StmtTypeLabel        StmtType = "label"
-	StmtTypeShownum      StmtType = "shownum"
-	StmtTypeShowchar     StmtType = "showchar"
-	StmtTypeInput        StmtType = "input"
 	StmtTypeGoto         StmtType = "goto"
 	StmtTypeCall         StmtType = "call"
 )
@@ -79,30 +76,6 @@ type Label struct {
 
 func (l Label) Type() StmtType {
 	return StmtTypeLabel
-}
-
-type ShowNum struct {
-	Value Value
-}
-
-func (s ShowNum) Type() StmtType {
-	return StmtTypeShownum
-}
-
-type ShowChar struct {
-	Value Value
-}
-
-func (s ShowChar) Type() StmtType {
-	return StmtTypeShowchar
-}
-
-type Input struct {
-	Name string
-}
-
-func (i Input) Type() StmtType {
-	return StmtTypeInput
 }
 
 type Goto struct {

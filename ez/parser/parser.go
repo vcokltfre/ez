@@ -59,21 +59,6 @@ var (
 		[]lexer.TokenType{lexer.TTLabel},
 		[]lexer.TokenType{lexer.TTEndStmt},
 	)
-	matchShownum = matchTokenPattern(
-		[]lexer.TokenType{lexer.TTKeywordShownum},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
-		[]lexer.TokenType{lexer.TTEndStmt},
-	)
-	matchShowchar = matchTokenPattern(
-		[]lexer.TokenType{lexer.TTKeywordShowchar},
-		[]lexer.TokenType{lexer.TTLiteralInt, lexer.TTIdentifier},
-		[]lexer.TokenType{lexer.TTEndStmt},
-	)
-	matchInput = matchTokenPattern(
-		[]lexer.TokenType{lexer.TTKeywordInput},
-		[]lexer.TokenType{lexer.TTIdentifier},
-		[]lexer.TokenType{lexer.TTEndStmt},
-	)
 	matchGoto = matchTokenPattern(
 		[]lexer.TokenType{lexer.TTKeywordGoto},
 		[]lexer.TokenType{lexer.TTIdentifier},
@@ -175,38 +160,6 @@ func parseLabel(tokens []lexer.Token) Label {
 	}
 }
 
-func parseShownum(tokens []lexer.Token) ShowNum {
-	value := tokens[1]
-
-	return ShowNum{
-		Value: Value{
-			Type:  valueTypeFromToken(value.Type),
-			Value: value.Data,
-			Token: value,
-		},
-	}
-}
-
-func parseShowchar(tokens []lexer.Token) ShowChar {
-	value := tokens[1]
-
-	return ShowChar{
-		Value: Value{
-			Type:  valueTypeFromToken(value.Type),
-			Value: value.Data,
-			Token: value,
-		},
-	}
-}
-
-func parseInput(tokens []lexer.Token) Input {
-	variable := tokens[1]
-
-	return Input{
-		Name: variable.Data,
-	}
-}
-
 func parseGoto(tokens []lexer.Token) Goto {
 	label := tokens[1]
 
@@ -258,18 +211,6 @@ func Parse(tokens []lexer.Token) (*Program, error) {
 		} else if matchLabel(tokens[index:]) {
 			program.Stmts = append(program.Stmts, parseLabel(tokens[index:]))
 			index += 2
-			continue
-		} else if matchShownum(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseShownum(tokens[index:]))
-			index += 3
-			continue
-		} else if matchShowchar(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseShowchar(tokens[index:]))
-			index += 3
-			continue
-		} else if matchInput(tokens[index:]) {
-			program.Stmts = append(program.Stmts, parseInput(tokens[index:]))
-			index += 3
 			continue
 		} else if matchGoto(tokens[index:]) {
 			program.Stmts = append(program.Stmts, parseGoto(tokens[index:]))

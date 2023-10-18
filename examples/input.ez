@@ -1,0 +1,4 @@
+call vm_no_input_buffering
+call input a
+call showc a
+call showc 10

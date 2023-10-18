@@ -5,7 +5,8 @@ n = 10
 
 :loop
 
-shown a
+call shown a
+call showc 10
 
 temp = a
 a = b

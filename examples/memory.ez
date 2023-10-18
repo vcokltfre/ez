@@ -1,4 +1,4 @@
 b = 123
 call memset 1 b
 call memget 1 a
-shown a
+call shown a

@@ -43,12 +43,9 @@ const (
 )
 
 var Keywords = map[string]TokenType{
-	"if":    TTKeywordIf,
-	"goto":  TTKeywordGoto,
-	"shown": TTKeywordShownum,
-	"showc": TTKeywordShowchar,
-	"input": TTKeywordInput,
-	"call":  TTKeywordCall,
+	"if":   TTKeywordIf,
+	"goto": TTKeywordGoto,
+	"call": TTKeywordCall,
 }
 
 func IsKeyword(word string) bool {

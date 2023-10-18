@@ -1,0 +1,7 @@
+n = 10000000
+
+:loop
+
+n = n - 1
+
+if n != 0 goto loop

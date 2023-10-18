@@ -17,7 +17,7 @@ func main() {
 
 	opts := make(map[string]string)
 	for i := 2; i < len(os.Args); i++ {
-		parts := strings.SplitN(os.Args[i], "=", 1)
+		parts := strings.Split(os.Args[i], "=")
 		if len(parts) != 2 {
 			fmt.Println("Invalid option:", os.Args[i])
 			return

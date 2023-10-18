@@ -5,12 +5,19 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/vcokltfre/ez/ez/lexer"
 	"github.com/vcokltfre/ez/ez/parser"
 )
+
+type ExternalFunc struct {
+	ArgCount int
+	Fn       func(lexer.TokenContext, ...parser.Value) error
+}
 
 type VM struct {
 	Memory    []int64
 	Variables map[string]int64
+	Funcs     map[string]ExternalFunc
 
 	program *parser.Program
 	jumps   map[string]int
@@ -186,6 +193,34 @@ func (vm *VM) goTo(stmt parser.Goto) error {
 	return nil
 }
 
+func (vm *VM) call(stmt parser.Call) error {
+	callFn, ok := vm.Funcs[stmt.Name]
+	if !ok {
+		return stmt.Token.Context.Error("runtime", "function does not exist")
+	}
+
+	if len(stmt.Values) != callFn.ArgCount && callFn.ArgCount != -1 {
+		return stmt.Token.Context.Error("runtime", "incorrect number of arguments")
+	}
+
+	for _, val := range stmt.Values {
+		if val.Type == parser.ValueTypeVar {
+			if _, ok := vm.Variables[val.Value]; !ok {
+				return val.Token.Context.Error("runtime", "variable does not exist")
+			}
+		}
+	}
+
+	return callFn.Fn(stmt.Token.Context, stmt.Values...)
+}
+
+func (vm *VM) RegisterFunc(name string, argCount int, fn func(lexer.TokenContext, ...parser.Value) error) {
+	vm.Funcs[name] = ExternalFunc{
+		ArgCount: argCount,
+		Fn:       fn,
+	}
+}
+
 func (vm *VM) Run(program *parser.Program) error {
 	vm.program = program
 
@@ -235,6 +270,11 @@ func (vm *VM) Run(program *parser.Program) error {
 			if err != nil {
 				return err
 			}
+		case parser.StmtTypeCall:
+			err := vm.call(stmt.(parser.Call))
+			if err != nil {
+				return err
+			}
 		}
 
 		vm.index++
@@ -247,6 +287,7 @@ func New(memsize int) *VM {
 	return &VM{
 		Memory:    make([]int64, memsize),
 		Variables: make(map[string]int64),
+		Funcs:     make(map[string]ExternalFunc),
 
 		jumps: make(map[string]int),
 	}

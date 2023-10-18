@@ -81,6 +81,27 @@ var (
 	)
 )
 
+func matchCall(tokens []lexer.Token) bool {
+	if tokens[0].Type != lexer.TTKeywordCall {
+		return false
+	}
+
+	if tokens[1].Type != lexer.TTIdentifier {
+		return false
+	}
+
+	index := 2
+	for index < len(tokens) && (tokens[index].Type == lexer.TTLiteralInt || tokens[index].Type == lexer.TTIdentifier) {
+		index++
+	}
+
+	if index >= len(tokens) || tokens[index].Type != lexer.TTEndStmt {
+		return false
+	}
+
+	return true
+}
+
 func parseVarDeclValue(tokens []lexer.Token) VarDeclValue {
 	assignTo := tokens[0]
 	assignFrom := tokens[2]
@@ -195,6 +216,28 @@ func parseGoto(tokens []lexer.Token) Goto {
 	}
 }
 
+func parseCall(tokens []lexer.Token) Call {
+	name := tokens[1]
+
+	values := []Value{}
+
+	index := 2
+	for tokens[index].Type != lexer.TTEndStmt {
+		values = append(values, Value{
+			Type:  valueTypeFromToken(tokens[index].Type),
+			Value: tokens[index].Data,
+			Token: tokens[index],
+		})
+		index++
+	}
+
+	return Call{
+		Name:   name.Data,
+		Values: values,
+		Token:  name,
+	}
+}
+
 func Parse(tokens []lexer.Token) (*Program, error) {
 	program := &Program{}
 	index := 0
@@ -231,6 +274,11 @@ func Parse(tokens []lexer.Token) (*Program, error) {
 		} else if matchGoto(tokens[index:]) {
 			program.Stmts = append(program.Stmts, parseGoto(tokens[index:]))
 			index += 3
+			continue
+		} else if matchCall(tokens[index:]) {
+			stmt := parseCall(tokens[index:])
+			program.Stmts = append(program.Stmts, stmt)
+			index += 2 + len(stmt.Values)
 			continue
 		} else if tokens[index].Type == lexer.TTEndStmt {
 			index++

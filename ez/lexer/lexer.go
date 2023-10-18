@@ -190,5 +190,15 @@ func Lex(code, filename string) ([]Token, error) {
 		return nil, context.Error(STEP, fmt.Sprintf("Unexpected character: %s", string(current)))
 	}
 
+	tokens = append(tokens, Token{
+		Type: TTEndStmt,
+		Context: TokenContext{
+			Line:   line,
+			Column: column,
+			Index:  index,
+			File:   filename,
+		},
+	})
+
 	return tokens, nil
 }

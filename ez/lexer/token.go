@@ -16,6 +16,7 @@ const (
 	TTKeywordShownum  TokenType = "shownum"
 	TTKeywordShowchar TokenType = "showchar"
 	TTKeywordInput    TokenType = "input"
+	TTKeywordCall     TokenType = "call"
 
 	TTIdentifier TokenType = "identifier"
 	TTLiteralInt TokenType = "literal_int"
@@ -47,6 +48,7 @@ var Keywords = map[string]TokenType{
 	"shown": TTKeywordShownum,
 	"showc": TTKeywordShowchar,
 	"input": TTKeywordInput,
+	"call":  TTKeywordCall,
 }
 
 func IsKeyword(word string) bool {

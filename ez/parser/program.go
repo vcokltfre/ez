@@ -13,6 +13,7 @@ const (
 	StmtTypeShowchar     StmtType = "showchar"
 	StmtTypeInput        StmtType = "input"
 	StmtTypeGoto         StmtType = "goto"
+	StmtTypeCall         StmtType = "call"
 )
 
 type ValueType string
@@ -111,6 +112,16 @@ type Goto struct {
 
 func (g Goto) Type() StmtType {
 	return StmtTypeGoto
+}
+
+type Call struct {
+	Name   string
+	Values []Value
+	Token  lexer.Token
+}
+
+func (c Call) Type() StmtType {
+	return StmtTypeCall
 }
 
 type Stmt interface {

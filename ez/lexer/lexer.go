@@ -148,6 +148,10 @@ func Lex(code, filename string) ([]Token, error) {
 		}
 
 		if current == '\n' {
+			tokens = append(tokens, Token{
+				Type:    TTEndStmt,
+				Context: context,
+			})
 			index++
 			line++
 			column = 1
@@ -158,16 +162,6 @@ func Lex(code, filename string) ([]Token, error) {
 		if whitespace > 0 {
 			index += whitespace
 			column += whitespace
-			continue
-		}
-
-		if current == ';' {
-			tokens = append(tokens, Token{
-				Type:    TTEndStmt,
-				Context: context,
-			})
-			index++
-			column++
 			continue
 		}
 

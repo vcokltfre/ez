@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/vcokltfre/ez/ez/lexer"
+	"github.com/vcokltfre/ez/ez/parser"
 )
 
 func Run(code, filename string) error {
@@ -12,7 +13,12 @@ func Run(code, filename string) error {
 		return err
 	}
 
-	fmt.Println(tokens)
+	program, err := parser.Parse(tokens)
+	if err != nil {
+		return err
+	}
 
-	return err
+	fmt.Println(*program)
+
+	return nil
 }

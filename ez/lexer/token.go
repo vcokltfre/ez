@@ -12,7 +12,6 @@ type TokenType string
 
 const (
 	TTKeywordIf       TokenType = "if"
-	TTKeywordEnd      TokenType = "end"
 	TTKeywordGoto     TokenType = "goto"
 	TTKeywordShownum  TokenType = "shownum"
 	TTKeywordShowchar TokenType = "showchar"
@@ -45,7 +44,6 @@ const (
 
 var Keywords = map[string]TokenType{
 	"if":    TTKeywordIf,
-	"end":   TTKeywordEnd,
 	"goto":  TTKeywordGoto,
 	"shown": TTKeywordShownum,
 	"showc": TTKeywordShowchar,

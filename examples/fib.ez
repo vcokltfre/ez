@@ -5,11 +5,12 @@ n = 10
 
 :loop
 
+shown a
+
 temp = a
 a = b
 b = temp + b
 
-if n > 0
-    n = n - 1
-    goto loop
-end
+n = n - 1
+
+if n > 0 goto loop
